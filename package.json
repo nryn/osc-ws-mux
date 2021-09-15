@@ -1,0 +1,17 @@
+{
+  "name": "osc-ws-mux",
+  "version": "1.0.0",
+  "description": "A naïve node JS application which receives OSC signals from any number of sources and multiplexes them out as JSON via Websockets.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "node index.js"
+  },
+  "dependencies": {
+    "osc": "2.4.2",
+    "ws": "8.2.1"
+  },
+  "author": "http://github.com/nryn",
+  "license": "ISC"
+}
