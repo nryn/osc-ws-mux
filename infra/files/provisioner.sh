@@ -24,8 +24,11 @@ npm install
 # install ws (websocket library) from source because this AMI doesn't have glibc 2.28...
 npm install ws --build-from-source
 
+# install pm2
+npm install pm2@5.1.1 -g
+
 # run app
-npm run serve &
+pm2 start index.js --name osc-ws-mux
 
 # also run webserver with webpage for testing websocket
 cd examples
