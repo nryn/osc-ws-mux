@@ -1,4 +1,5 @@
 import WebSocket, { WebSocketServer } from 'ws'
+import readline from 'readline'
 import osc from 'osc'
 
 const defaults = {
@@ -29,6 +30,7 @@ export default class Broadcaster {
         
         this.udpPort = null
         this.udpReady = false
+        this.udpLastErrorTimestamp = null
 
         this.wss = null
         this.websocketReady = false
@@ -50,8 +52,8 @@ export default class Broadcaster {
         let timeWaiting = 0
         let waiting = setInterval(() => {
             const printProgress = () => {
-                process.stdout.clearLine()
-                process.stdout.cursorTo(0)
+                readline.clearLine(process.stdout)
+                readline.cursorTo(process.stdout, 0)
                 process.stdout.write(`udpReady: ${this.udpReady} | websocketReady: ${this.websocketReady} | timeWaiting < ${timeWaiting = timeWaiting + interval}ms`)
             }
             if (!this.udpReady || !this.websocketReady) {
@@ -75,6 +77,10 @@ export default class Broadcaster {
         })
 
         this.udpPort.open()
+        this.udpPort.on("error", (err) => {
+            this.udpLastErrorTimestamp = new Date().getTime()
+            console.log(`UDP Error @ ${this.udpLastErrorTimestamp} :: ${err.message}`)
+        })
         this.udpPort.on('ready', () => { this.udpReady = true })
     }
     
