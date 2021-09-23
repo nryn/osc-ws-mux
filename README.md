@@ -51,17 +51,17 @@ The application doesn't log the incoming messages, so there isn't any feedback t
 
 If you've got the application running, your machine will now be acting as a websocket server (accessible on `localhost:8080`, by default).
 
-You should be able to use your client of choice to perform the websocket handshake, but if you want a simple shell to test with, you can serve an example file found at `examples/websocketClient.html`. If you have python installed, you can easily open a new terminal window, navigate to the root of the project, then set up an HTTP Server for this:
+You should be able to use your client of choice to perform the websocket handshake, but if you want a simple shell to test with, you can serve an example file found at `web/admin.html`. If you have python installed, you can easily open a new terminal window, navigate to the root of the project, then set up an HTTP Server for this:
 
 ```bash
-$ cd examples/
+$ cd web/
 $ python -m SimpleHTTPServer 8002
 ```
 
-Then you can navigate to `localhost:8002` using the address bar in your web browser.
+Then you can navigate to `localhost:8002/admin.html` using the address bar in your web browser.
 When OSC messages are sent on port `57121`, this webpage should print them out.
 
-Don't forget to return to this terminal window and 
+Don't forget to return to this terminal window and `Ctrl + C` when you want to quit it.
 
 ### Reading data from the application ...using OSC
 
@@ -121,10 +121,12 @@ In future, this configuration should improve its security.
 You can retreive the IP Address of the instance once it's created by running this in the `infra/` directory, which you can use as the destination host for your OSC messages, or for the example test page in the browser (`http://{ip address}/websocketClient.html`):
 
 ```bash
-$ terraform show | grep "[^_]public_ip"
+$ terraform show | grep -A 14 "aws_eip" | grep "public_ip[^a-z]"
 ```
 
-For troubleshooting and debugging you should be able to SSH into the virtual machine from within the `infra/` directory like this:
+If you wish to set a custom domain, like `mywebsite.com` or `myproject.mywebsite.com`, you can set up a new "A Record" with your DNS Provider, pointing to the above "Elastic" IP Address. The idea is this IP Address will not change between server rebuilds.
+
+For troubleshooting and debugging the running server, you should be able to SSH into the virtual machine from within the `infra/` directory like this:
 
 ```bash
 $ ssh -i ./osc_ws_mux_ssh_key ec2-user@ec2-{ip address but replace every . with a -}.eu-west-2.compute.amazonaws.com

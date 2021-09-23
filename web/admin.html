@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>osc-ws-mux Admin Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="rootContainer" class="container vertical">
+    
+        <div id="adminControlsContainer" class="container vertical">
+            <div id="loadRecordingsButton" class="container button">Load Recordings</div>
+            <div id="recordingsContainer" class="container vertical"></div>
+        </div>
+
+        <div id="rawMessageContainer">
+            <pre id="rawMessage">Please start the websocket server and osc receiver, and start sending OSC messages</pre>
+        </div>
+    </div>
+    <script>
+        const pre = document.getElementById('rawMessage')
+        const host = window.location.host
+        const parsedHost = host.split(':')[0]
+
+        // function to inject buttons to trigger pre-made "recordings" that live server-side
+        const recordingsContainer = document.getElementById('recordingsContainer')
+        const populateRecordings = (recordings) => {
+            recordingsContainer.innerHTML = ''
+            for (let recording of recordings) {
+                const playRecordingButton = document.createElement('div')
+                playRecordingButton.id = `recording-${recording}`
+                playRecordingButton.classList.add('button')
+                playRecordingButton.addEventListener('click', () => { ws.send(JSON.stringify({ type: "playRecording", recording })) })
+                playRecordingButton.innerText = `Play ${recording}`
+                recordingsContainer.appendChild(playRecordingButton)
+            }
+        }
+        
+        // set up websocket connection to server
+        const ws = new WebSocket(`ws://${parsedHost}:8080/ws`)
+        ws.onmessage = (msg) => {
+            const parsedData = JSON.parse(msg.data)
+            switch (parsedData.type) {
+                case 'recordingsData':
+                    populateRecordings(parsedData.recordings)
+                    break;
+                default:
+                    pre.innerHTML = msg.data
+            }
+        }
+
+        // ask server for recordings data
+        const loadRecordingsButton = document.getElementById('loadRecordingsButton')
+        loadRecordingsButton.addEventListener('click', () => { ws.send(JSON.stringify({type: "loadRecordings"})) })
+        
+    
+    </script>
+</body>
+</html>

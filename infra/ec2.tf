@@ -57,11 +57,11 @@ locals {
       content     = filebase64("../package.json")
     },
     {
-      path        = "/osc-ws-mux/examples/websocketClient.html"
+      path        = "/osc-ws-mux/web/index.html"
       permissions = "0644"
       owner       = "root:root"
       encoding    = "b64"
-      content     = filebase64("../examples/websocketClient.html")
+      content     = filebase64("../web/admin.html")
     },
   ]
 })}

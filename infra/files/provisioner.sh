@@ -31,5 +31,5 @@ npm install pm2@5.1.1 -g
 pm2 start index.js --name osc-ws-mux
 
 # also run webserver with webpage for testing websocket
-cd examples
+cd web
 python -m SimpleHTTPServer 80 &
