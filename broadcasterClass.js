@@ -1,6 +1,7 @@
 import WebSocket, { WebSocketServer } from 'ws'
 import readline from 'readline'
 import osc from 'osc'
+import fs from 'fs'
 
 const defaults = {
     localAddress: '0.0.0.0',
@@ -39,6 +40,9 @@ export default class Broadcaster {
         this.msgCounts = {}
 
         this.broadcaster = null
+
+        this.recordingInProgress = false
+        this.playbackInProgress = false
 
         this.init()
     }
@@ -83,9 +87,54 @@ export default class Broadcaster {
         })
         this.udpPort.on('ready', () => { this.udpReady = true })
     }
+
+    fetchRecordingsData() {
+        return {
+            type: 'recordingsData',
+            recordings: fs.readdirSync('./recordings') || []
+        }
+    }
+
+    playRecording(recording) {
+        this.playbackInProgress = true
+
+        try {
+            const rawRecording = fs.readFileSync(`./recordings/${recording}`)
+            const recordingData = JSON.parse(rawRecording)
+            recordingData.forEach((messageSet, i) => {
+                setTimeout(() => {
+                    Object.entries(messageSet).forEach(([address, args]) => { 
+                        this.saveMessage({ address, args }, true)
+                    })
+                    const isLastMessage = recordingData.length === i + 1
+                    if (isLastMessage) setTimeout(() => { this.playbackInProgress = false }, this.broadcastIntervalInMs)
+                }, this.broadcastIntervalInMs * i);
+            })
+
+        } catch(err) {
+            console.log('recording playback error:', err)
+            this.playbackInProgress = false
+            return
+        }
+    }
     
     initWSS() {
         this.wss = new WebSocketServer({ port: this.websocketBroadcastPort })
+        this.wss.on('connection', (ws) => {
+            ws.on('message', (msg) => {
+                const parsedMessage = JSON.parse(msg)
+                switch (parsedMessage.type) {
+                    case 'loadRecordings':
+                        ws.send(JSON.stringify(this.fetchRecordingsData()))
+                        break;
+                    case 'playRecording':
+                        this.playRecording(parsedMessage.recording)
+                        break;
+                    default:
+                        console.log('received unknown msg: %s', msg)
+                }
+            })
+        })
         this.websocketReady = true
     }
 
@@ -123,7 +172,10 @@ export default class Broadcaster {
         this.broadcaster = setInterval(() => this.broadcastSavedMessages(), this.broadcastIntervalInMs)
     }
 
-    saveMessage({ address, args }) {
+    saveMessage({ address, args }, isFromRecording = false) {
+        // forget about any data that arrives while playing back a recording (unless the data is from the recording!)
+        if (this.playbackInProgress && !isFromRecording) return
+
         // increment or start message counter for given address
         if (this.savedMessages[address]) {
             this.msgCounts[address] = this.msgCounts[address] + 1 
