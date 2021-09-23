@@ -42,7 +42,10 @@ export default class Broadcaster {
         this.broadcaster = null
 
         this.recordingInProgress = false
+        this.currentRecordingFilename = 'default.json'
+        this.currentRecordingData = []
         this.playbackInProgress = false
+        this.nowPlaying = {}
 
         this.init()
     }
@@ -87,36 +90,6 @@ export default class Broadcaster {
         })
         this.udpPort.on('ready', () => { this.udpReady = true })
     }
-
-    fetchRecordingsData() {
-        return {
-            type: 'recordingsData',
-            recordings: fs.readdirSync('./recordings') || []
-        }
-    }
-
-    playRecording(recording) {
-        this.playbackInProgress = true
-
-        try {
-            const rawRecording = fs.readFileSync(`./recordings/${recording}`)
-            const recordingData = JSON.parse(rawRecording)
-            recordingData.forEach((messageSet, i) => {
-                setTimeout(() => {
-                    Object.entries(messageSet).forEach(([address, args]) => { 
-                        this.saveMessage({ address, args }, true)
-                    })
-                    const isLastMessage = recordingData.length === i + 1
-                    if (isLastMessage) setTimeout(() => { this.playbackInProgress = false }, this.broadcastIntervalInMs)
-                }, this.broadcastIntervalInMs * i);
-            })
-
-        } catch(err) {
-            console.log('recording playback error:', err)
-            this.playbackInProgress = false
-            return
-        }
-    }
     
     initWSS() {
         this.wss = new WebSocketServer({ port: this.websocketBroadcastPort })
@@ -129,6 +102,19 @@ export default class Broadcaster {
                         break;
                     case 'playRecording':
                         this.playRecording(parsedMessage.recording)
+                        break;
+                    case 'toggleRecording':
+                        this.toggleRecording()
+                        ws.send(JSON.stringify(this.currentRecordingStatus()))
+                        break;
+                    case 'recordingStatus':
+                        ws.send(JSON.stringify(this.currentRecordingStatus()))
+                        break;
+                    case 'playingStatus':
+                        ws.send(JSON.stringify(this.currentPlayingStatus()))
+                        break;
+                    case 'deleteRecording':
+                        this.deleteRecording(parsedMessage.recording)
                         break;
                     default:
                         console.log('received unknown msg: %s', msg)
@@ -147,6 +133,7 @@ export default class Broadcaster {
             this.broadcastOverWebsocket(msgs)
             this.broadcastOverUDP(msgs)
         }
+        if (this.recordingInProgress) this.currentRecordingData.push({...msgs})
         this.clearMessages(msgs)
     }
 
@@ -196,6 +183,83 @@ export default class Broadcaster {
             clearInterval(this.broadcaster)
             this.broadcaster = null
         }
+    }
+
+    fetchRecordingsData() {
+        return {
+            type: 'recordingsData',
+            recordings: fs.readdirSync('./recordings') || []
+        }
+    }
+
+    currentRecordingStatus() {
+        return {
+            type: 'recordingStatus',
+            isRecording: this.recordingInProgress
+        }
+    }
+    
+    currentPlayingStatus() {
+        return {
+            type: 'playingStatus',
+            nowPlaying: Object.entries(this.nowPlaying).reduce((acc, [recording, playing]) => {
+                const item = playing ? [recording] : []
+                return [...acc, ...item]
+            }, [])
+        }
+    }
+
+    playRecording(recording) {
+        this.playbackInProgress = true
+        this.nowPlaying[recording] = true
+
+        try {
+            const rawRecording = fs.readFileSync(`./recordings/${recording}`)
+            const recordingData = JSON.parse(rawRecording)
+            recordingData.forEach((messageSet, i) => {
+                setTimeout(() => {
+                    Object.entries(messageSet).forEach(([address, args]) => { 
+                        this.saveMessage({ address, args }, true)
+                    })
+                    const isLastMessage = recordingData.length === i + 1
+                    if (isLastMessage) setTimeout(() => { 
+                        this.nowPlaying[recording] = false
+                        const isAnythingPlaying = Object.values(this.nowPlaying).some(recording => !!recording)
+                        if (!isAnythingPlaying) this.playbackInProgress = false
+                    }, this.broadcastIntervalInMs)
+                }, this.broadcastIntervalInMs * i);
+            })
+
+        } catch(err) {
+            console.log('recording playback error:', err)
+            this.nowPlaying[recording] = false
+            const isAnythingPlaying = Object.values(this.nowPlaying).some(recording => !!recording)
+            if (!isAnythingPlaying) this.playbackInProgress = false
+            return
+        }
+    }
+
+    deleteRecording(recording) {
+        try {
+            fs.unlinkSync(`./recordings/${recording}`)
+        } catch(err) {
+            console.log('recording deletion error:', err)
+            return
+        }
+    }
+
+    toggleRecording() {
+        if (this.recordingInProgress) { // recording is in progress, we need to save the file and stop the recording    
+            fs.writeFileSync(`./recordings/${this.currentRecordingFilename}`, JSON.stringify(this.currentRecordingData), 'utf8')
+            this.currentRecordingFilename = 'default.json'
+            this.currentRecordingData = []
+        } else { // start recording
+            const now = new Date()
+            this.currentRecordingFilename = `${now.getUTCFullYear()}-${now.getUTCMonth()+1}-${now.getUTCDate()}_${now.getUTCHours()}:${now.getUTCMinutes()}:${now.getUTCSeconds()}.json`
+            this.currentRecordingData = []
+        }
+
+        this.recordingInProgress = !this.recordingInProgress
     }
 
 } 
