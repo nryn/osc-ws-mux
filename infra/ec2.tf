@@ -1,3 +1,10 @@
+# elastic ip address
+
+resource "aws_eip" "osc-ws-mux" {
+  instance = module.ec2_instance.id
+  vpc      = true
+}
+
 # the instance itself
 
 module "ec2_instance" {
