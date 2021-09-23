@@ -27,6 +27,7 @@ body {
     padding: 2em;
     color: #ffffffba;
     cursor: pointer;
+    margin-top: 1em;
 }
 
 #rawMessageContainer {
@@ -43,14 +44,14 @@ body {
     position: fixed;
     top: 0;
     right: 0;
-    width: 20em;
+    width: 25em;
     max-height: 90vh;
     align-items: baseline;
     background: #264e65d1;
     box-shadow: 4px 1px 20px 13px #00c4ff1f;
     border-radius: 0 0 0 6px;
     justify-content: start;
-    padding: 1em;
+    padding: 0 1em 1em 1em;
 }
 
 #recordingsContainer {
@@ -62,8 +63,44 @@ body {
     margin-top: 1em;
     width: 100%;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     background: #ffffff1c;
 }
 
+#toggleRecordingButton {
+    transition: animation 2s;
+}
+
+.recording {
+    animation-name: onTheAir;
+	animation-duration: 1s;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+}
+
+@keyframes onTheAir {
+  from {background-color: #e82e2e9c;}
+  to {background-color: #e82e2e2a;}
+}
+
+.playing {
+    animation-name: playback;
+	animation-duration: 1s;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+}
+
+@keyframes playback {
+  from {background-color: #2ee83d9c;}
+  to {background-color: #2ee83d27;}
+}
+
+.svgIcon {
+    filter: invert(1);
+}
+
+
+.recordingIcon {
+    margin-right: 1em;
+}

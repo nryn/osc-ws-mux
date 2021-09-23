@@ -6,12 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>osc-ws-mux Admin Page</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#656565">
+    <meta name="msapplication-TileColor" content="#2b5797">
+    <meta name="theme-color" content="#ffffff">
 </head>
 <body>
     <div id="rootContainer" class="container vertical">
     
         <div id="adminControlsContainer" class="container vertical">
-            <div id="loadRecordingsButton" class="container button">Load Recordings</div>
+            <div id="toggleRecordingButton" class="container button">Loading...</div>
             <div id="recordingsContainer" class="container vertical"></div>
         </div>
 
@@ -20,6 +27,7 @@
         </div>
     </div>
     <script>
+
         const pre = document.getElementById('rawMessage')
         const host = window.location.host
         const parsedHost = host.split(':')[0]
@@ -29,33 +37,103 @@
         const populateRecordings = (recordings) => {
             recordingsContainer.innerHTML = ''
             for (let recording of recordings) {
+                const recordingNameNeat = recording.replace(".json","")
                 const playRecordingButton = document.createElement('div')
-                playRecordingButton.id = `recording-${recording}`
+                playRecordingButton.id = `recording-${recordingNameNeat}`
+                playRecordingButton.classList.add('playbackButton')
                 playRecordingButton.classList.add('button')
-                playRecordingButton.addEventListener('click', () => { ws.send(JSON.stringify({ type: "playRecording", recording })) })
-                playRecordingButton.innerText = `Play ${recording}`
+                playRecordingButton.addEventListener('click', () => { 
+                    ws.send(JSON.stringify({ type: "playRecording", recording })) 
+                    setTimeout(() => { ws.send(JSON.stringify({type: "playingStatus"})) }, 100)
+                })
+                
+                const playRecordingButtonImg = document.createElement('img')
+                playRecordingButtonImg.classList.add('svgIcon')
+                playRecordingButtonImg.setAttribute('src', './icons/play.svg')
+                const playRecordingButtonText = document.createElement('span')
+                playRecordingButtonText.innerText = recordingNameNeat
+                playRecordingButton.appendChild(playRecordingButtonImg)
+                playRecordingButton.appendChild(playRecordingButtonText)
+
+                const deleteRecordingButton = document.createElement('img')
+                deleteRecordingButton.classList.add('svgIcon')
+                deleteRecordingButton.setAttribute('src', './icons/delete.svg')
+                deleteRecordingButton.addEventListener('click', () => { 
+                    ws.send(JSON.stringify({ type: "deleteRecording", recording })) 
+                    setTimeout(() => { ws.send(JSON.stringify({type: "loadRecordings"})) }, 100)
+                })
+                playRecordingButton.appendChild(deleteRecordingButton)
+                
                 recordingsContainer.appendChild(playRecordingButton)
             }
         }
+
+        // ask server for recordings data - commented out because it loads on page load and refreshes after toggling recording
+        // const loadRecordingsButton = document.getElementById('loadRecordingsButton')
+        // loadRecordingsButton.addEventListener('click', () => { ws.send(JSON.stringify({type: "loadRecordings"})) })
         
-        // set up websocket connection to server
+        // ask server to start or stop recording data
+        const toggleRecordingButton = document.getElementById('toggleRecordingButton')
+        toggleRecordingButton.addEventListener('click', () => {
+            ws.send(JSON.stringify({type: "toggleRecording"}))
+            setTimeout(() => { ws.send(JSON.stringify({type: "loadRecordings"})) }, 100)
+        })
+        // function that sets the color of the recording button
+        const colorRecordingButton = (isRecording) => {
+
+            const recordButtonImage = document.createElement('img')
+            recordButtonImage.classList.add('svgIcon')
+            recordButtonImage.classList.add('recordingIcon')
+            recordButtonImage.setAttribute('src', `./icons/${isRecording ? 'stop': 'record'}.svg`)
+            const recordingButtonText = document.createElement('span')
+            recordingButtonText.innerText = `${isRecording ? 'Stop' : 'Start'} Recording`
+
+            // replace all HTML in record button
+            toggleRecordingButton.innerHTML = ''
+            toggleRecordingButton.appendChild(recordButtonImage)
+            toggleRecordingButton.appendChild(recordingButtonText)
+            toggleRecordingButton.classList[isRecording ? "add" : "remove"]('recording')
+            
+        }
+        // function that sets the color of any play button
+        const colorPlaybackButton = (nowPlaying) => {
+            const allPlaybackButtons = document.getElementsByClassName('playbackButton')
+            for (let btn of allPlaybackButtons) {
+                btn.classList.remove('playing')
+            }
+            for (let recording of nowPlaying) {
+                const recordingNameNeat = recording.replace(".json","")
+                const playRecordingButton = document.getElementById(`recording-${recordingNameNeat}`)
+                playRecordingButton.classList.add('playing')
+            }
+        }
+        
+        // set up websocket connection to server and handle messages
         const ws = new WebSocket(`ws://${parsedHost}:8080/ws`)
+        ws.onopen = () => {
+            ws.send(JSON.stringify({ type: "loadRecordings" }))
+            setInterval(() => {
+                ws.send(JSON.stringify({ type: "recordingStatus" }))
+                ws.send(JSON.stringify({ type: "playingStatus" }))
+            }, 2000)
+        }
         ws.onmessage = (msg) => {
             const parsedData = JSON.parse(msg.data)
             switch (parsedData.type) {
                 case 'recordingsData':
                     populateRecordings(parsedData.recordings)
                     break;
+                case 'recordingStatus':
+                    colorRecordingButton(parsedData.isRecording)
+                    break;
+                case 'playingStatus':
+                    colorPlaybackButton(parsedData.nowPlaying)
+                    break;
                 default:
                     pre.innerHTML = msg.data
             }
         }
-
-        // ask server for recordings data
-        const loadRecordingsButton = document.getElementById('loadRecordingsButton')
-        loadRecordingsButton.addEventListener('click', () => { ws.send(JSON.stringify({type: "loadRecordings"})) })
         
-    
     </script>
 </body>
 </html>
