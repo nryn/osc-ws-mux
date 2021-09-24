@@ -3,3 +3,4 @@ node_modules
 terraform.tfstate*
 ignore
 osc_ws_mux_ssh_key*
+.DS_Store
