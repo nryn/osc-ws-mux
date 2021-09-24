@@ -7,7 +7,7 @@ const defaults = {
     localAddress: '0.0.0.0',
     websocketBroadcastPort: 8080,
     udpBroadcastPort: 57122,
-    oscDestinationAddress: '198.51.100.5', // IETF & IANA Approved Documentation/Example Address
+    oscDestinationAddress: '0.0.0.0',
     oscDestinationPort: '9001',
     oscReceiverPort: 57121,
     broadcastIntervalInMs: 100,

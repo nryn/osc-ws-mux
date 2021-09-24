@@ -5,6 +5,7 @@ A naïve node JS application which can receive OSC messages from a number of sou
 When many messages are sent to the same OSC address between broadcast intervals, only the latest message is broadcast for that address.
 
 The multiplexed data is broadcast in two formats:
+
 - as a JSON object via Websocket to any active connected devices
 - via OSC to a specified host/port (technically this broadcast format can't multiplex messages, but this single OSC channel will broadcast messages from all the input sources)
 
@@ -24,17 +25,20 @@ $ npm install
 which should create a `node_modules` directory. You should now have everything you need to run the application:
 
 ```bash
-$ npm run serve
+$ ADMIN_PAGE=true npm run serve
 ```
 
+The `ADMIN_PAGE=true` environment variable can be useful for those who want a GUI to preview the incoming data and control some features. You can also do `npm run serve` without setting the environment variable.
 You should see output that looks something like:
 
 ```
 Setting up UDP and WSS Servers for Broadcast
 Listening for OSC over UDP port 57121
+Setting up Simple HTTP Server
+Simple HTTP Server running at localhost:8002
 udpReady: true | websocketReady: true | timeWaiting < 10ms
-When OSC received on 57121, will re-broadcast data...
-...via OSC to {some ip address}:{some port} via local UDP port 57122
+When OSC received, will re-broadcast data...
+...via OSC to 0.0.0.0:9001 via local UDP port 57122
 ...via Websockets to connected clients over port 8080
 ```
 
@@ -49,24 +53,16 @@ The application doesn't log the incoming messages, so there isn't any feedback t
 
 ### Reading data from the application ...using the Admin Page
 
-The easiest way to validate everything's working is with the Admin Webpage. 
-You can set up an HTTP Server from the `web/` directory:
-If you have python installed, you can easily do this from a new terminal window. 
-Navigate to the correct directory (shown here relative to the root of the projectt), and use python's SimpleHTTPServer mode:
+The easiest way to validate everything's working is with the Admin Webpage.
+Given you're running the application with the `ADMIN_PAGE=true` environment variable as shown in the example above, you should be able to navigate to `http://localhost:8002` in your web browser.
 
-```bash
-$ cd web/
-$ python -m SimpleHTTPServer 8002
-```
+Now when OSC messages are sent to port `57121`, this webpage should print them out.
 
-Then you can navigate to `localhost:8002/admin.html` using the address bar in your web browser.
-When OSC messages are sent on port `57121`, this webpage should print them out.
+From this page you can:
 
-From this page you can set up broadcasing the OSC data on to a specific address and port, in addition to the websocket broadcast.
-
-You can also initiate recordings of data streams, and trigger these recordings (causing them to be broadcast to all consumers).
-
-Don't forget to return to this terminal window and `Ctrl + C` when you want to quit it.
+- Initiate recordings of data streams (recording files stored as JSON in the `recordings/` directory)
+- Trigger these recordings (causing them to be broadcast to all consumers)
+- Configure broadcasting/relaying the OSC data to another address and port, in addition to the websocket broadcast. This could be useful if you have non-web consumers that happen to accept OSC.
 
 ### Reading data from the application ...using Websockets
 
@@ -87,7 +83,7 @@ const broadcaster = new Broadcaster({
 })
 ```
 
-Now you can run the application using the instructions above.
+Now you can run the application with `$ npm run serve`.
 
 ### Deploying to the AWS Cloud (optional)
 
