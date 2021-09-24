@@ -106,48 +106,6 @@ locals {
       content     = filebase64("../web/icons/stop.svg")
     },
     {
-      path        = "/osc-ws-mux/web/android-chrome-192x192.png"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/android-chrome-192x192.png")
-    },
-    {
-      path        = "/osc-ws-mux/web/android-chrome-512x512.png"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/android-chrome-512x512.png")
-    },
-    {
-      path        = "/osc-ws-mux/web/apple-touch-icon.png"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/apple-touch-icon.png")
-    },
-    {
-      path        = "/osc-ws-mux/web/browserconfig.xml"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/browserconfig.xml")
-    },
-    {
-      path        = "/osc-ws-mux/web/favicon-16x16.png"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/favicon-16x16.png")
-    },
-    {
-      path        = "/osc-ws-mux/web/favicon-32x32.png"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/favicon-32x32.png")
-    },
-    {
       path        = "/osc-ws-mux/web/favicon.ico"
       permissions = "0644"
       owner       = "root:root"
@@ -155,53 +113,11 @@ locals {
       content     = filebase64("../web/favicon.ico")
     },
     {
-      path        = "/osc-ws-mux/web/mstile-144x144.png"
+      path        = "/osc-ws-mux/recordings/example.json"
       permissions = "0644"
       owner       = "root:root"
       encoding    = "b64"
-      content     = filebase64("../web/mstile-144x144.png")
-    },
-    {
-      path        = "/osc-ws-mux/web/mstile-150x150.png"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/mstile-150x150.png")
-    },
-    {
-      path        = "/osc-ws-mux/web/mstile-310x150.png"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/mstile-310x150.png")
-    },
-    {
-      path        = "/osc-ws-mux/web/mstile-310x310.png"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/mstile-310x310.png")
-    },
-    {
-      path        = "/osc-ws-mux/web/mstile-70x70.png"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/mstile-70x70.png")
-    },
-    {
-      path        = "/osc-ws-mux/web/safari-pinned-tab.svg"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/safari-pinned-tab.svg")
-    },
-    {
-      path        = "/osc-ws-mux/web/site.webmanifest"
-      permissions = "0644"
-      owner       = "root:root"
-      encoding    = "b64"
-      content     = filebase64("../web/site.webmanifest")
+      content     = filebase64("../recordings/example.json")
     },
   ]
 })}
@@ -213,9 +129,6 @@ data "template_file" "user_data" {
 }
 
 data "cloudinit_config" "provisioner" {
-  gzip          = false
-  base64_encode = false
-
   part {
     content_type = "text/cloud-config"
     filename     = "cloud-config.yaml"

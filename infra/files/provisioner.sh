@@ -2,10 +2,8 @@
 
 # install dev tools so we can compile a package ourselves
 yum groupinstall -y 'Development Tools'
-
 # make a bash profile
 touch ~/.bash_profile
-
 # install node version manager
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 export NVM_DIR="$HOME/.nvm"
@@ -13,23 +11,17 @@ export NVM_DIR="$HOME/.nvm"
 echo "export NVM_DIR=~/.nvm" >> ~/.bash_profile
 echo "source /.nvm/nvm.sh" >> ~/.bash_profile
 
-# install node
-nvm install v14.17.1
-node -e "console.log('Running Node.js ' + process.version)"
-
 # go to our app directory
 cd /osc-ws-mux
-# try to install all the dependencies - this will probably fail on ws
+
+# install node and deps
+nvm install v14.17.1
 npm install
-# install ws (websocket library) from source because this AMI doesn't have glibc 2.28...
+# build from source because the AMI is missing glibc 2.28
 npm install ws --build-from-source
-
-# install pm2
 npm install pm2@5.1.1 -g
-
-# run app
+# go
 pm2 start index.js --name osc-ws-mux
-
-# also run webserver with webpage for testing websocket
+# also run webserver for testing
 cd web
 python -m SimpleHTTPServer 80 &
