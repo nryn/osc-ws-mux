@@ -67,6 +67,7 @@ body {
 #recordingsContainer {
     box-sizing: border-box;
     padding: 0 1.1em;
+    overflow: scroll;
 }
 
 #recordingsContainer .button {
@@ -113,4 +114,81 @@ body {
 
 .recordingIcon {
     margin-right: 1em;
+}
+
+.textbox {
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    width: 90%;
+    margin: 10px 5px 0 5px;
+    background: #cecece38;
+    padding: 0em 0.5em;
+    border-radius: 4px;
+    color: white;
+    font-family: monospace;
+    font-size: 0.9em;
+    height: 2.4em;
+}
+
+.flipswitch {
+    margin: 10px 5px 0px 5px;
+    position: relative;
+    width: 7em;
+    height: 2.2em;
+    -webkit-appearance: initial;
+    border-radius: 2.4em;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    font-size: 1em;
+    font-family: monospace;
+    cursor: pointer;
+    background-color: #17171754;
+    transition: background-color 0.3s ease-in 0s;
+}
+
+.flipswitch:after {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    background: #496170;
+    transition: all 0.3s ease-in 0s;
+    border-radius: 2em;
+}
+
+.flipswitch:after {
+    left: 0;
+    content: "";
+}
+
+.flipswitch:checked {
+    background-color: #7fff0094;
+}
+
+.flipswitch:checked:after {
+    left: 50%;
+    content: "";
+}
+
+:disabled {
+    filter: opacity(0.3);
+    cursor: initial;
+}
+
+::placeholder {
+    color: rgba(255, 255, 255, 0.37);
+}
+
+.ioConfigForm {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.formLabel {
+    margin: 1em 0 0 0;
+    color: #ffffff9e;
+}
+
+#wsPort, #oscDestinationPort {
+    width: 3em;
 }

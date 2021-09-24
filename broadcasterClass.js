@@ -7,8 +7,9 @@ const defaults = {
     localAddress: '0.0.0.0',
     websocketBroadcastPort: 8080,
     udpBroadcastPort: 57122,
-    oscDestinationAddress: '0.0.0.0',
+    oscDestinationAddress: '198.51.100.5', // IETF & IANA Approved Documentation/Example Address
     oscDestinationPort: '9001',
+    oscReceiverPort: 57121,
     broadcastIntervalInMs: 100,
 }
 
@@ -19,16 +20,20 @@ export default class Broadcaster {
         udpBroadcastPort = defaults.udpBroadcastPort,
         oscDestinationAddress = defaults.oscDestinationAddress,
         oscDestinationPort = defaults.oscDestinationPort,
+        oscReceiverPort = defaults.oscReceiverPort,
         broadcastIntervalInMs = defaults.broadcastIntervalInMs,
     } = defaults) {
         this.localAddress = localAddress
         this.websocketBroadcastPort = websocketBroadcastPort
+        this.oscReceiverPort = oscReceiverPort
+
         this.udpBroadcastPort = udpBroadcastPort
         this.oscDestinationAddress = oscDestinationAddress
         this.oscDestinationPort = oscDestinationPort
 
         this.broadcastIntervalInMs = broadcastIntervalInMs
         
+        this.oscRelayEnabled = false
         this.udpPort = null
         this.udpReady = false
         this.udpLastErrorTimestamp = null
@@ -69,7 +74,7 @@ export default class Broadcaster {
                 printProgress()
                 process.stdout.write('\n')
                 clearInterval(waiting)
-                console.log('When OSC received on 57121, will re-broadcast data...')
+                console.log('When OSC received, will re-broadcast data...')
                 console.log(`...via OSC to ${this.oscDestinationAddress}:${this.oscDestinationPort} via local UDP port ${this.udpBroadcastPort}`)
                 console.log(`...via Websockets to connected clients over port ${this.websocketBroadcastPort}`)
                 this.setUpBroadcastAtInterval()
@@ -110,6 +115,13 @@ export default class Broadcaster {
                     case 'recordingStatus':
                         ws.send(JSON.stringify(this.currentRecordingStatus()))
                         break;
+                    case 'setIoConfig':
+                        this.setIoConfig(parsedMessage.oscRelayEnabled, parsedMessage.oscDestinationAddress, parsedMessage.oscDestinationPort)
+                        ws.send(JSON.stringify(this.currentIoConfig()))
+                        break;
+                    case 'ioConfig':
+                        ws.send(JSON.stringify(this.currentIoConfig()))
+                        break;
                     case 'playingStatus':
                         ws.send(JSON.stringify(this.currentPlayingStatus()))
                         break;
@@ -124,6 +136,23 @@ export default class Broadcaster {
         this.websocketReady = true
     }
 
+    setIoConfig(enabled, address, port) {
+        if (typeof enabled === 'boolean') this.oscRelayEnabled = enabled
+        if (address) this.oscDestinationAddress = address
+        if (port) this.oscDestinationPort = port
+    }
+
+    currentIoConfig() {
+        return {
+            type: 'ioConfig',
+            websocketBroadcastPort: this.websocketBroadcastPort,
+            oscReceiverPort: this.oscReceiverPort,
+            oscRelayEnabled: this.oscRelayEnabled,
+            oscDestinationAddress: this.oscDestinationAddress,
+            oscDestinationPort: this.oscDestinationPort,
+        }
+    }
+
     broadcastSavedMessages() {
         if (!this.udpReady) throw new Error('UDP not ready')
         if (!this.websocketReady) throw new Error('Websocket not ready')
@@ -131,7 +160,7 @@ export default class Broadcaster {
         const msgs = this.savedMessages
         if (Object.keys(msgs).length) {
             this.broadcastOverWebsocket(msgs)
-            this.broadcastOverUDP(msgs)
+            if (this.oscRelayEnabled) this.broadcastOverUDP(msgs)
         }
         if (this.recordingInProgress) this.currentRecordingData.push({...msgs})
         this.clearMessages(msgs)
