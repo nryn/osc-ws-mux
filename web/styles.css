@@ -30,15 +30,24 @@ body {
     margin-top: 1em;
 }
 
+#rootContainer {
+    padding: 3em 4em;
+    box-sizing: border-box;
+}
+
 #rawMessageContainer {
-    width: 90vw;
-    height: 100%;
+    width: 100%;
     padding: 1em;
-    background: #11283c;
+    background: linear-gradient(140deg, #11283c, #11283c47);
     color: #5d7098;
     border-radius: 6px;
-    margin: 3em;
     font-size: 1.2em;
+    transition: color 0s;
+}
+
+#rawMessageContainer.stale {
+  color: #5d70981f;
+  transition:color 5s;
 }
 
 #adminControlsContainer {

@@ -21,6 +21,7 @@
     </div>
     <script>
 
+        const rawMessageContainer = document.getElementById('rawMessageContainer')
         const pre = document.getElementById('rawMessage')
         const host = window.location.host
         const parsedHost = host.split(':')[0]
@@ -103,6 +104,13 @@
         
         // set up websocket connection to server and handle messages
         const ws = new WebSocket(`ws://${parsedHost}:8080/ws`)
+
+        let staleTimer = null
+        const freshenUpForMs = (ms) => {
+            rawMessageContainer.classList.remove('stale')
+            if (staleTimer) clearTimeout(staleTimer)
+            staleTimer = setTimeout(() => { rawMessageContainer.classList.add('stale') }, ms)
+        }
         ws.onopen = () => {
             ws.send(JSON.stringify({ type: "loadRecordings" }))
             setInterval(() => {
@@ -124,6 +132,7 @@
                     break;
                 default:
                     pre.innerHTML = msg.data
+                    freshenUpForMs(200) // if this doesn't get re-hit within the time limit, go "stale"
             }
         }
         
