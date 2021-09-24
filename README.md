@@ -47,11 +47,12 @@ Now you should be able to send OSC data to `localhost:57121` from your own machi
 
 The application doesn't log the incoming messages, so there isn't any feedback that OSC messages are received without trying to read the multiplexed data from the application. The next step talks about how to do this.
 
-### Reading data from the application ...using Websockets
+### Reading data from the application ...using the Admin Page
 
-If you've got the application running, your machine will now be acting as a websocket server (accessible on `localhost:8080`, by default).
-
-You should be able to use your client of choice to perform the websocket handshake, but if you want a simple shell to test with, you can serve an example file found at `web/admin.html`. If you have python installed, you can easily open a new terminal window, navigate to the root of the project, then set up an HTTP Server for this:
+The easiest way to validate everything's working is with the Admin Webpage. 
+You can set up an HTTP Server from the `web/` directory:
+If you have python installed, you can easily do this from a new terminal window. 
+Navigate to the correct directory (shown here relative to the root of the projectt), and use python's SimpleHTTPServer mode:
 
 ```bash
 $ cd web/
@@ -61,18 +62,28 @@ $ python -m SimpleHTTPServer 8002
 Then you can navigate to `localhost:8002/admin.html` using the address bar in your web browser.
 When OSC messages are sent on port `57121`, this webpage should print them out.
 
+From this page you can set up broadcasing the OSC data on to a specific address and port, in addition to the websocket broadcast.
+
+You can also initiate recordings of data streams, and trigger these recordings (causing them to be broadcast to all consumers).
+
 Don't forget to return to this terminal window and `Ctrl + C` when you want to quit it.
+
+### Reading data from the application ...using Websockets
+
+If you've got the application running, your machine will now be acting as a websocket server (accessible on `localhost:8080`, by default).
+
+You should be able to use your client of choice to perform the websocket handshake.
 
 ### Reading data from the application ...using OSC
 
-If you have a destination machine where you wish to receive the "multiplexed" OSC messages, this must be configured before running the application.
+If you have a destination machine where you wish to receive the "multiplexed" OSC messages, this can be configured before running the application (shown in the below example), or after by using the Admin Page as mentioned above.
 
-In the index.js file, you can replace the defaults given to the Broadcaster.
+In the index.js file, you can pass these to the Broadcaster.
 
 ```js
 const broadcaster = new Broadcaster({
-    oscDestinationAddress: '172.20.10.6', // e.g. an IP Address on a local network
-    oscDestinationPort: '9001', // e.g. a port on the above address that wants to receive OSC messages
+    oscDestinationAddress: '0.0.0.0',
+    oscDestinationPort: '9001', // a port on the above address that wants to receive OSC messages
 })
 ```
 
