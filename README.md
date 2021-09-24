@@ -108,6 +108,9 @@ ssh-keygen -N "" -t rsa -b 4096 -C "osc_ws_mux" -f ./osc_ws_mux_ssh_key
 
 This will create a pair of keys inside of infra directory. They should not be shared or committed to this repository.
 
+We must do one extra step, since we are constrained on the size of our application files because of our deployment/provisioning mechanism (at the time of writing):
+If there have been changes to the `broadcasterClass.js` file, we must minify this file into the `broadcasterClass-min.js` file.
+
 Now you can "apply", which means preparing a plan of infrastructure changes you want to make, and confirming them by typing 'yes' at the prompt. We will also include an argument that passes in the public part of the key to your future virtual server:
 
 ```bash

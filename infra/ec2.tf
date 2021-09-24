@@ -40,7 +40,7 @@ locals {
       permissions = "0644"
       owner       = "root:root"
       encoding    = "b64"
-      content     = filebase64("../broadcasterClass.js")
+      content     = filebase64("../broadcasterClass-min.js")
     },
     {
       path        = "/osc-ws-mux/index.js"
@@ -69,6 +69,13 @@ locals {
       owner       = "root:root"
       encoding    = "b64"
       content     = filebase64("../web/admin.html")
+    },
+    {
+      path        = "/osc-ws-mux/web/client.js"
+      permissions = "0644"
+      owner       = "root:root"
+      encoding    = "b64"
+      content     = filebase64("../web/client.js")
     },
     {
       path        = "/osc-ws-mux/web/styles.css"
