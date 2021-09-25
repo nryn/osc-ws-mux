@@ -3,6 +3,8 @@ const pre = document.getElementById('rawMessage')
 const host = window.location.host
 const parsedHost = host.split(':')[0]
 
+const str = (x) => JSON.stringify(x)
+
 // function to inject buttons to trigger pre-made "recordings" that live server-side
 const recordingsContainer = document.getElementById('recordingsContainer')
 const populateRecordings = (recordings) => {
@@ -18,8 +20,8 @@ const populateRecordings = (recordings) => {
             e.cancelBubble = true
             if (e.stopPropagation) e.stopPropagation()
             
-            ws.send(JSON.stringify({ type: 'playRecording', recording })) 
-            setTimeout(() => { ws.send(JSON.stringify({type: 'playingStatus'})) }, 100)
+            ws.send(str({ type: 'playRecording', recording })) 
+            setTimeout(() => { ws.send(str({type: 'playingStatus'})) }, 100)
         })
         
         const playRecordingButtonImg = document.createElement('img')
@@ -40,8 +42,8 @@ const populateRecordings = (recordings) => {
 
             const confirmation = confirm(`Are you sure you want to delete recording ${recordingNameNeat}?`)
             if (confirmation) {
-                ws.send(JSON.stringify({ type: 'deleteRecording', recording })) 
-                setTimeout(() => { ws.send(JSON.stringify({type: 'loadRecordings'})) }, 100)
+                ws.send(str({ type: 'deleteRecording', recording })) 
+                setTimeout(() => { ws.send(str({type: 'loadRecordings'})) }, 100)
             }
         })
         playRecordingButton.appendChild(deleteRecordingButton)
@@ -57,8 +59,8 @@ toggleRecordingButton.addEventListener('click', (e) => {
     e.cancelBubble = true
     if (e.stopPropagation) e.stopPropagation()
 
-    ws.send(JSON.stringify({type: 'toggleRecording'}))
-    setTimeout(() => { ws.send(JSON.stringify({type: 'loadRecordings'})) }, 100)
+    ws.send(str({type: 'toggleRecording'}))
+    setTimeout(() => { ws.send(str({type: 'loadRecordings'})) }, 100)
 })
 // function that sets the color of the recording button
 const colorRecordingButton = (isRecording) => {
@@ -96,7 +98,7 @@ const wsPort = document.getElementById('wsPort')
 let broadcastIntervalInMs = 100
 const broadcastInterval = document.getElementById('broadcastInterval')
 broadcastInterval.addEventListener('change', () => {
-    ws.send(JSON.stringify({
+    ws.send(str({
         type: 'setIoConfig',
         broadcastInterval: broadcastInterval.value
     }))
@@ -107,7 +109,7 @@ broadcastInterval.addEventListener('keypress', (e) => {
 
 const oscRelayToggle = document.getElementById('oscRelayToggle')
 oscRelayToggle.addEventListener('click', () => {
-    ws.send(JSON.stringify({
+    ws.send(str({
         type: 'setIoConfig',
         oscRelayEnabled: oscRelayToggle.checked
     }))
@@ -115,7 +117,7 @@ oscRelayToggle.addEventListener('click', () => {
 
 const oscDestinationAddress = document.getElementById('oscDestinationAddress')
 oscDestinationAddress.addEventListener('change', () => {
-    ws.send(JSON.stringify({
+    ws.send(str({
         type: 'setIoConfig',
         oscDestinationAddress: oscDestinationAddress.value
     }))
@@ -123,7 +125,7 @@ oscDestinationAddress.addEventListener('change', () => {
 
 const oscDestinationPort = document.getElementById('oscDestinationPort')
 oscDestinationPort.addEventListener('change', () => {
-    ws.send(JSON.stringify({
+    ws.send(str({
         type: 'setIoConfig',
         oscDestinationPort: oscDestinationPort.value
     }))
@@ -149,34 +151,34 @@ const freshenUpForMs = (ms) => {
 const ws = new WebSocket(`ws://${parsedHost}:8080/ws`) 
 
 ws.onopen = () => {
-    ws.send(JSON.stringify({ type: 'loadRecordings' }))
-    ws.send(JSON.stringify({ type: 'recordingStatus' }))
-    ws.send(JSON.stringify({ type: 'playingStatus' }))
-    ws.send(JSON.stringify({ type: 'ioConfig' }))
+    ws.send(str({ type: 'loadRecordings' }))
+    ws.send(str({ type: 'recordingStatus' }))
+    ws.send(str({ type: 'playingStatus' }))
+    ws.send(str({ type: 'ioConfig' }))
 }
 ws.onmessage = (msg) => {
-    const parsedData = JSON.parse(msg.data)
-    switch (parsedData.type) {
+    const data = JSON.parse(msg.data)
+    switch (data.type) {
         case 'recordingsData':
-            populateRecordings(parsedData.recordings)
+            populateRecordings(data.recordings)
             break;
         case 'recordingStatus':
-            colorRecordingButton(parsedData.isRecording)
+            colorRecordingButton(data.isRecording)
             break;
         case 'playingStatus':
-            colorPlaybackButton(parsedData.nowPlaying)
+            colorPlaybackButton(data.nowPlaying)
             break;
         case 'ioConfig':
             populateIoConfig(
-                parsedData.oscDestinationAddress,
-                parsedData.oscDestinationPort,
-                parsedData.websocketBroadcastPort,
-                parsedData.oscRelayEnabled,
-                parsedData.broadcastInterval
+                data.oscDestinationAddress,
+                data.oscDestinationPort,
+                data.websocketBroadcastPort,
+                data.oscRelayEnabled,
+                data.broadcastInterval
             )
-            broadcastIntervalInMs = parsedData.broadcastInterval
+            broadcastIntervalInMs = data.broadcastInterval
             if (pre.className === 'initialMessage') {
-                pre.innerHTML = `Waiting for OSC messages on ${parsedHost}:${parsedData.oscReceiverPort || '????'}`
+                pre.innerHTML = `Waiting for OSC messages on ${parsedHost}:${data.oscReceiverPort || '????'}`
                 pre.classList.remove('initialMessage')
             }
             break;

@@ -75,7 +75,7 @@ locals {
       permissions = "0644"
       owner       = "root:root"
       encoding    = "b64"
-      content     = filebase64("../web/client.js")
+      content     = filebase64("../web/client-min.js")
     },
     {
       path        = "/osc-ws-mux/web/styles.css"
