@@ -52,13 +52,16 @@ const populateRecordings = (recordings) => {
 
 // ask server to start or stop recording data
 const toggleRecordingButton = document.getElementById('toggleRecordingButton')
-toggleRecordingButton.addEventListener('click', () => {
+toggleRecordingButton.addEventListener('click', (e) => {
+    if (!e) var e = window.event
+    e.cancelBubble = true
+    if (e.stopPropagation) e.stopPropagation()
+
     ws.send(JSON.stringify({type: 'toggleRecording'}))
     setTimeout(() => { ws.send(JSON.stringify({type: 'loadRecordings'})) }, 100)
 })
 // function that sets the color of the recording button
 const colorRecordingButton = (isRecording) => {
-
     const recordButtonImage = document.createElement('img')
     recordButtonImage.classList.add('svgIcon')
     recordButtonImage.classList.add('recordingIcon')
@@ -90,6 +93,18 @@ const colorPlaybackButton = (nowPlaying) => {
 const wsAddress = document.getElementById('wsAddress')
 const wsPort = document.getElementById('wsPort')
 
+let broadcastIntervalInMs = 100
+const broadcastInterval = document.getElementById('broadcastInterval')
+broadcastInterval.addEventListener('change', () => {
+    ws.send(JSON.stringify({
+        type: 'setIoConfig',
+        broadcastInterval: broadcastInterval.value
+    }))
+})
+broadcastInterval.addEventListener('keypress', (e) => {
+    if (e.key == 'Enter') e.preventDefault(); return false
+})
+
 const oscRelayToggle = document.getElementById('oscRelayToggle')
 oscRelayToggle.addEventListener('click', () => {
     ws.send(JSON.stringify({
@@ -114,12 +129,13 @@ oscDestinationPort.addEventListener('change', () => {
     }))
 })
 
-const populateIoConfig = (oscDestAddr, oscDestPort, oscReceiverPort, websocketBroadcastPort, oscRelayEnabled) => {
+const populateIoConfig = (oscDestAddr, oscDestPort, websocketBroadcastPort, oscRelayEnabled, broadcastIntervalInMs) => {
     wsAddress.value = parsedHost
-    wsPort.value = websocketBroadcastPort
     if (oscDestinationAddress !== document.activeElement) oscDestinationAddress.value = oscDestAddr
     if (oscDestinationPort !== document.activeElement) oscDestinationPort.value = oscDestPort
+    wsPort.value = websocketBroadcastPort
     oscRelayToggle.checked = oscRelayEnabled
+    if (broadcastInterval !== document.activeElement) broadcastInterval.value = broadcastIntervalInMs
 }
 
 let staleTimer = null
@@ -134,11 +150,9 @@ const ws = new WebSocket(`ws://${parsedHost}:8080/ws`)
 
 ws.onopen = () => {
     ws.send(JSON.stringify({ type: 'loadRecordings' }))
-    setInterval(() => {
-        ws.send(JSON.stringify({ type: 'recordingStatus' }))
-        ws.send(JSON.stringify({ type: 'playingStatus' }))
-        ws.send(JSON.stringify({ type: 'ioConfig' }))
-    }, 2000)
+    ws.send(JSON.stringify({ type: 'recordingStatus' }))
+    ws.send(JSON.stringify({ type: 'playingStatus' }))
+    ws.send(JSON.stringify({ type: 'ioConfig' }))
 }
 ws.onmessage = (msg) => {
     const parsedData = JSON.parse(msg.data)
@@ -156,10 +170,11 @@ ws.onmessage = (msg) => {
             populateIoConfig(
                 parsedData.oscDestinationAddress,
                 parsedData.oscDestinationPort,
-                parsedData.oscReceiverPort,
                 parsedData.websocketBroadcastPort,
-                parsedData.oscRelayEnabled
+                parsedData.oscRelayEnabled,
+                parsedData.broadcastInterval
             )
+            broadcastIntervalInMs = parsedData.broadcastInterval
             if (pre.className === 'initialMessage') {
                 pre.innerHTML = `Waiting for OSC messages on ${parsedHost}:${parsedData.oscReceiverPort || '????'}`
                 pre.classList.remove('initialMessage')
@@ -167,6 +182,6 @@ ws.onmessage = (msg) => {
             break;
         default:
             pre.innerHTML = msg.data
-            freshenUpForMs(200) // if this doesn't get re-hit within the time limit, go "stale"
+            freshenUpForMs(broadcastIntervalInMs * 2) // if this doesn't get re-hit within the time limit, go "stale"
     }
 }

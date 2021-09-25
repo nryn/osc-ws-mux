@@ -13,15 +13,19 @@
         <div id="adminControlsContainer" class="container vertical">
             <div id="adminControls" class="container horizontal">
                 <div id="ioConfig">
+                    <form class="ioConfigForm" id="intervalConfigForm">
+                        <p class="formLabel">Broadcast Interval (ms):</p>
+                        <input type="text" class="textbox" name="broadcastInterval" id="broadcastInterval" placeholder="interval in ms">
+                    </form>
                     <p class="formLabel">Broadcast Messages via WebSocket on:</p>
-                    <form class="ioConfigForm" id="wsConfigForm" class="initiallyHidden">
+                    <form class="ioConfigForm" id="wsConfigForm">
                         <input type="checkbox" class="flipswitch" id="wsToggle" name="wsToggle" checked disabled>
                         <input type="text" class="textbox" name="address" id="wsAddress" placeholder="address" disabled>
                         <input type="text" class="textbox" name="port" id="wsPort" placeholder="port" disabled>
                     </form>
 
                     <p class="formLabel">Broadcast Messages via OSC to:</p>
-                    <form class="ioConfigForm" id="oscConfigForm" class="initiallyHidden">
+                    <form class="ioConfigForm" id="oscConfigForm">
                         <input type="checkbox" class="flipswitch" id="oscRelayToggle" name="oscRelayToggle">
                         <input type="text" class="textbox" name="address" id="oscDestinationAddress" placeholder="address">
                         <input type="text" class="textbox" name="port" id="oscDestinationPort" placeholder="port">

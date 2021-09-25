@@ -105,19 +105,8 @@ export default class Broadcaster {
                     case 'loadRecordings':
                         ws.send(JSON.stringify(this.fetchRecordingsData()))
                         break;
-                    case 'playRecording':
-                        this.playRecording(parsedMessage.recording)
-                        break;
-                    case 'toggleRecording':
-                        this.toggleRecording()
-                        ws.send(JSON.stringify(this.currentRecordingStatus()))
-                        break;
                     case 'recordingStatus':
                         ws.send(JSON.stringify(this.currentRecordingStatus()))
-                        break;
-                    case 'setIoConfig':
-                        this.setIoConfig(parsedMessage.oscRelayEnabled, parsedMessage.oscDestinationAddress, parsedMessage.oscDestinationPort)
-                        ws.send(JSON.stringify(this.currentIoConfig()))
                         break;
                     case 'ioConfig':
                         ws.send(JSON.stringify(this.currentIoConfig()))
@@ -125,8 +114,22 @@ export default class Broadcaster {
                     case 'playingStatus':
                         ws.send(JSON.stringify(this.currentPlayingStatus()))
                         break;
+                    case 'playRecording':
+                        this.playRecording(parsedMessage.recording)
+                        this.broadcastOverWebsocket(this.currentPlayingStatus())
+                        break;
+                    case 'toggleRecording':
+                        this.toggleRecording()
+                        this.broadcastOverWebsocket(this.currentRecordingStatus())
+                        this.broadcastOverWebsocket(this.fetchRecordingsData())
+                        break;
+                    case 'setIoConfig':
+                        this.setIoConfig(parsedMessage.oscRelayEnabled, parsedMessage.oscDestinationAddress, parsedMessage.oscDestinationPort, parsedMessage.broadcastInterval)
+                        this.broadcastOverWebsocket(this.currentIoConfig())
+                        break;
                     case 'deleteRecording':
                         this.deleteRecording(parsedMessage.recording)
+                        this.broadcastOverWebsocket(this.fetchRecordingsData())
                         break;
                     default:
                         console.log('received unknown msg: %s', msg)
@@ -136,10 +139,15 @@ export default class Broadcaster {
         this.websocketReady = true
     }
 
-    setIoConfig(enabled, address, port) {
+    setIoConfig(enabled, address, port, broadcastInterval) {
         if (typeof enabled === 'boolean') this.oscRelayEnabled = enabled
         if (address) this.oscDestinationAddress = address
         if (port) this.oscDestinationPort = port
+        if (broadcastInterval) {
+            this.broadcastIntervalInMs = parseInt(broadcastInterval) > 0 ? broadcastInterval : 1
+            this.stopBroadcast()
+            this.setUpBroadcastAtInterval()
+        }
     }
 
     currentIoConfig() {
@@ -150,6 +158,7 @@ export default class Broadcaster {
             oscRelayEnabled: this.oscRelayEnabled,
             oscDestinationAddress: this.oscDestinationAddress,
             oscDestinationPort: this.oscDestinationPort,
+            broadcastInterval: this.broadcastIntervalInMs,
         }
     }
 
